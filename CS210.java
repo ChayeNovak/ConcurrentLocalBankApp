@@ -8,13 +8,15 @@ import java.util.concurrent.*;
 
 public class CS210 extends Accounts{
 	
-    public static int accountNumber;
-
-	public CS210(int accountNumber, double Aria, double Pres) {
+    //public static int accountNumber;
+    
+    public CS210(int accountNumber, double Aria, double Pres) {
 		super(accountNumber, Aria, Pres);
 		// TODO Auto-generated constructor stub
 	}
 
+	Accounts account = new Accounts(accountNumber, Aria, Aria);
+    
 	/**
      * Runs the server. When a client connects, the server spawns a new thread to do
      * the servicing.
@@ -100,8 +102,25 @@ class Accounts {
 		return Pres;
 	}
 	
+	public int getAccountIndex() {
+		for (Accounts s : Accounts) {
+			if (s.accountNumber.equals(getAccNum())) {
+				
+			}
+		}
+	}
+	
+	public void printState() {
+		for (Accounts a : Accounts) {
+			
+		}
+		getAria();
+		getPres();
+	}
+	
 	 public static void getAccNum(int accountNumber) {
-		CS210.accountNumber = accountNumber;
+		//CS210.accountNumber = accountNumber;
+		accountNumber = accountNumber;
 	 }
 	 
 	/*public ArrayList <Accounts> openAccount() {
