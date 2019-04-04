@@ -3,8 +3,12 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Scanner;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
+import java.util.Comparator;
 
 public class CS210 extends Accounts{
 	
@@ -34,7 +38,11 @@ public class CS210 extends Accounts{
         private Socket socket;
         double Rate = 10.0;
         int accountNumber;
+        
+        ArrayList<Accounts> AccountList = new ArrayList<Accounts>();
+        //Regular expression, used to ensure correct user input when opening an account (checks whether input contains digits).
         String regex = "\\d+";
+        //Array for storing user input
         String[] userInput;
         
         Talk(Socket socket) {
@@ -48,14 +56,37 @@ public class CS210 extends Accounts{
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 while (in.hasNextLine()) {
 		    String line = in.nextLine();
+		    		//Separates the line of user input into seperate tokens and consumes the spaces between them.
 		            userInput = line.split(" ");
-		    		if (line.equals("State")) {
-		    			
-		    		}
 		    		// Checks that user enters correct syntax for opening an account
 		    		if (line.contains("Open") && userInput[1].matches(regex)) {
 		    			//accountNumber = (Integer.parseInt(line));
-		    			System.out.println("opened account " + userInput[1]);
+		    			out.println("Opened account " + userInput[1]);
+		    			accountNumber = Integer.parseInt(userInput[1]);
+		    			Accounts account = new Accounts(accountNumber, Aria, Pres);
+		    			AccountList.add(account);
+		    		}
+		    		
+		    		if (line.equals("State")) {
+		    			Collections.sort(AccountList, new Comparator<Accounts>() {
+		    						//Sort the list in ascending (numerical) order
+		    						public int compare(Accounts a1, Accounts a2) {
+										return Integer.valueOf(a1.accountNumber).compareTo(a2.accountNumber);
+		    						}
+		    			});
+		    			
+		    			//When user wants to check the state, this outputs all accounts and their currencies in the list.
+		    			for(Accounts element : AccountList){
+		    		        try{
+		    		        	
+		    		        	out.println(element.getAccNum() + ": " + "Arian " + element.getAria() + " " + "Pres " + element.getPres());
+		    		        }
+		    		        catch(Exception e){
+		    		            System.out.println("Exception e: " + e);
+		    		        }
+		    		    }
+		    			
+		    			out.println("Rate " + Rate);
 		    		}
                 }
              } catch (Exception e) {
@@ -65,7 +96,12 @@ public class CS210 extends Accounts{
                 System.out.println("Closed: " + socket);
             }
         }
+        
+        public void setRate (double rateSet) {
+        	this.Rate = rateSet;
+        }
     }
+    
 }
 
 /**
@@ -74,8 +110,8 @@ public class CS210 extends Accounts{
  * This class defines the account objects and its elements for usage by the server and brokers.
  */
 class Accounts {
-	double Aria = 0.0;
-	double Pres = 0.0;
+	static double Aria = 0.0;
+	static double Pres = 0.0;
     int accountNumber;
 	String State;
 	
@@ -102,21 +138,25 @@ class Accounts {
 		return Pres;
 	}
 	
-	public int getAccountIndex() {
-		for (Accounts s : Accounts) {
-			if (s.accountNumber.equals(getAccNum())) {
+	public int getAccNum() {
+		return accountNumber;
+	}
+	
+	@Override
+	public String toString(){
+	    return "Arian " + Double.toString(Aria) + "Pres " + Double.toString(Pres);
+	}
+	
+	/*public double getAccountIndex(int acc) {
+		for (double s : Accounts) {
+			if (s.accountNumber.equals(getAccNum(acc))) {
 				
 			}
 		}
-	}
+		return acc;
+	}*/
 	
-	public void printState() {
-		for (Accounts a : Accounts) {
-			
-		}
-		getAria();
-		getPres();
-	}
+	
 	
 	 public static void getAccNum(int accountNumber) {
 		//CS210.accountNumber = accountNumber;
