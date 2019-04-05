@@ -6,9 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 
 public class CS210 extends Accounts{
 	
@@ -39,11 +44,17 @@ public class CS210 extends Accounts{
         double Rate = 10.0;
         int accountNumber;
         
-        ArrayList<Accounts> AccountList = new ArrayList<Accounts>();
+        List<Accounts> AccountList = new ArrayList<Accounts>();
+        
         //Regular expression, used to ensure correct user input when opening an account (checks whether input contains digits).
         String regex = "\\d+";
         //Array for storing user input
         String[] userInput;
+        //Array for storing user input containing parentheses (Convert, Transfer)
+        Pattern pattern = Pattern.compile("\\d+");
+        String inputMatcher = "Convert 0000 (0, 0)";
+        Matcher matcher = pattern.matcher(inputMatcher);
+        String[] userInput2;
         
         Talk(Socket socket) {
             this.socket = socket;
@@ -58,12 +69,13 @@ public class CS210 extends Accounts{
 		    String line = in.nextLine();
 		    		//Separates the line of user input into seperate tokens and consumes the spaces between them.
 		            userInput = line.split(" ");
+		            userInput2 = line.split(" |\\(|,|\\)");
 		    		// Checks that user enters correct syntax for opening an account
 		    		if (line.contains("Open") && userInput[1].matches(regex)) {
 		    			//accountNumber = (Integer.parseInt(line));
 		    			out.println("Opened account " + userInput[1]);
 		    			accountNumber = Integer.parseInt(userInput[1]);
-		    			Accounts account = new Accounts(accountNumber, Aria, Pres);
+		    			Accounts account = new Accounts(accountNumber, 0, 0);
 		    			AccountList.add(account);
 		    		}
 		    		
@@ -88,6 +100,102 @@ public class CS210 extends Accounts{
 		    			
 		    			out.println("Rate " + Rate);
 		    		}
+		    		
+		    		//Checks if the user attempts to set the conversion rate to 0, if so, output an error message informing this is not possible.
+		    		if (line.contains("Rate") && userInput[1].matches(regex) && Double.parseDouble(userInput[1]) <= 0) {
+		    			out.println("Please enter a valid conversion rate. This cannot be set to 0.");
+		    		}
+		    		
+		    		//Check if the user enters a valid conversion rate, if so, set Rate to that value.
+		    		if (line.contains("Rate") && userInput[1].matches(regex) && Double.parseDouble(userInput[1]) != 0) {
+		    			setRate(Double.parseDouble(userInput[1]));
+		    		}
+		    		
+		    		if (line.contains("Convert") && userInput[1].matches(regex)){
+			    		for(Accounts acList : AccountList) {
+			    	        if(acList.getAccNum() == ((Integer.parseInt(userInput[1])))) {
+			    	        	System.out.println(acList.getAccNum());
+			    	        	double a;
+			    	         	double p;
+			    	        	double newArian;
+			    	        	double newPres;
+			    	        		try {
+			    	        		    //System.out.print(matcher.group());
+			    	        			System.out.println(userInput2[5]);
+			    	        		    a = Double.parseDouble(userInput2[3]);
+			    	        		    p = Double.parseDouble(userInput2[5]);
+			    	        		    
+			    	        		    newArian = acList.getAria() - a + (p / Rate);
+			    	        		    newPres = acList.getPres() - a + (p * Rate);
+			    	        		    
+			    	        		   // convertCurrency(acList.getAccNum(), acList.setArian(newArian), acList.setPres(newPres));
+			    	        		    acList.convertCurrency(newArian, newPres);
+			    	  
+			    	        		} catch (Exception e) {
+			    	        				System.out.println(e);
+			    	        				e.printStackTrace();
+			    	        		}
+			    	        		out.println("Converted");
+			    	        }
+			    	    }
+			    		
+			    		//Make arraylist Synchronised
+		    			AccountList = Collections.synchronizedList(AccountList);
+		    	    // NOTE - Can only have a race condition on something with a read action, not just a write action.
+		    		}
+		    		
+		    		if (line.contains("Transfer") && userInput[1].matches(regex)) {
+			    		for(Accounts acList : AccountList) {
+			    	        if(acList.getAccNum() == ((Integer.parseInt(userInput[1])))) {
+			    	        	double a;
+			    	         	double p;
+			    	        	double newArian;
+			    	        	double newPres;
+			    	        		try {
+			    	        		    //Arian to be transferred
+			    	        			System.out.println(userInput2[6]);
+			    	        		    a = Double.parseDouble(userInput2[4]);
+			    	        		    //Pres to be transferred
+			    	        		    p = Double.parseDouble(userInput2[6]);
+			    	        		    newArian = acList.getAria() - a;
+			    	        		    newPres = acList.getPres() - p;
+			    	        		    acList.transferBalance(newArian, newPres);
+			    	  
+			    	        		} catch (Exception e) {
+			    	        				System.out.println(e);
+			    	        				e.printStackTrace();
+			    	        		}
+			    	        }
+			    	        
+			    	        if(acList.getAccNum() == ((Integer.parseInt(userInput[2])))) {
+			    	        	double a;
+			    	         	double p;
+			    	        	double newArian;
+			    	        	double newPres;
+		    	        		try {
+		    	        		    //Arian to be transferred
+		    	        		    a = Double.parseDouble(userInput2[4]);
+		    	        		    //Pres to be transferred
+		    	        		    p = Double.parseDouble(userInput2[6]);
+		    	        		    System.out.println(a + " " + p);
+		    	        		    newArian = acList.getAria() + a;
+		    	        		    newPres = acList.getPres() + p;
+		    	        		    acList.transferBalance(newArian, newPres);
+		    	        		   // convertCurrency(acList.getAccNum(), acList.setArian(newArian), acList.setPres(newPres));
+		    	        		    //acList.convertCurrency(newArian, newPres);
+		    	  
+		    	        		} catch (Exception e) {
+		    	        				System.out.println(e);
+		    	        				e.printStackTrace();
+		    	        		}
+		    	        }
+			    	
+			    	    }
+			    		
+			    		//Make arraylist Synchronised
+		    			AccountList = Collections.synchronizedList(AccountList);
+		    	    // NOTE - Can only have a race condition on something with a read action, not just a write action.
+		    		}
                 }
              } catch (Exception e) {
                 System.out.println("Error:" + socket);
@@ -100,6 +208,8 @@ public class CS210 extends Accounts{
         public void setRate (double rateSet) {
         	this.Rate = rateSet;
         }
+        
+       
     }
     
 }
@@ -110,11 +220,14 @@ public class CS210 extends Accounts{
  * This class defines the account objects and its elements for usage by the server and brokers.
  */
 class Accounts {
-	static double Aria = 0.0;
-	static double Pres = 0.0;
+	 double Aria = 0.0;
+	 double Pres = 0.0;
     int accountNumber;
+    double a;
+	double p;
 	String State;
 	
+	//Create array list
 	public static ArrayList<Accounts> Accounts = new ArrayList<Accounts>();
 	
 	
@@ -138,9 +251,27 @@ class Accounts {
 		return Pres;
 	}
 	
+	public void setArian(Double arian) {
+		this.Aria = arian;
+	}
+	
+	public void setPres(Double pres) {
+		this.Pres = pres;
+	}
+	
 	public int getAccNum() {
 		return accountNumber;
 	}
+	
+	public void convertCurrency (double a, double p) {
+    	this.Aria = a;
+    	this.Pres = p;
+    }
+	
+	public void transferBalance (double a, double p) {
+    	this.Aria = a;
+    	this.Pres = p;
+    }
 	
 	@Override
 	public String toString(){
